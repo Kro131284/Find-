@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kontakte & Firmen</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    .table-container {
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #007BFF;
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      padding: 5px 0;
+    }
+    .php-old {
+      color: red;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .php-warning {
+      color: orange;
+      font-weight: bold;
+    }
+    .php-good {
+      color: green;
+      font-weight: bold;
+    }
+    .subaccount {
+      font-weight: bold;
+      color: #007BFF;
+      margin-top: 5px;
+    }
+    .nested-list {
+      padding-left: 20px;
+    }
+    .redirect {
+      font-weight: bold;
+      color: black;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .redirect-domain {
+      color: black;
+      font-size: 16px;
+      font-weight: 400;
+    }
+    /* Websupport-Tags (grün) */
+    .tag-websupport {
+      background-color: #28a745;
+      color: #fff;
+      margin-right: 5px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    /* Print und Sonstiges-Tags (dunkel) */
+    .tag-print {
+      background-color: #343a40;
+      color: #fff;
+      margin-right: 5px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Find!</h1>
+
+  <!-- Suchbereich über den Tabs -->
+  <div class="container my-3">
+    <div class="row mb-3 align-items-center">
+      <div class="col-md-8">
+        <input type="text" id="searchInput" class="form-control" placeholder="Suchbegriff eingeben...">
+      </div>
+      <div class="col-md-3">
+        <select id="searchCriteria" class="form-select">
+          <option value="all">Alle Felder</option>
+          <option value="domain">Domain-Name</option>
+          <option value="kas">Kas Kennung</option>
+          <option value="moco">Moco-Identifier</option>
+          <option value="php">PHP Version</option>
+          <option value="customer">Kundennamen</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-primary" id="searchButton">Suchen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Nav Tabs -->
+  <ul class="nav nav-tabs" id="dataTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="hosting-tab" data-bs-toggle="tab" data-bs-target="#hosting" type="button" role="tab">Hosting</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="websupport-tab" data-bs-toggle="tab" data-bs-target="#websupport" type="button" role="tab">Websupport</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="print-tab" data-bs-toggle="tab" data-bs-target="#print" type="button" role="tab">Print</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="kas-tab" data-bs-toggle="tab" data-bs-target="#kas" type="button" role="tab">KAS</button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="dataTabsContent">
+    <!-- Hosting Tab -->
+    <div class="tab-pane fade show active" id="hosting" role="tabpanel" aria-labelledby="hosting-tab">
+      <div class="table-container">
+        <h2>Hosting</h2>
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Kundennr</th>
+              <th>Adresse</th>
+              <th>Kontaktpersonen</th>
+              <th>Email</th>
+              <th>Telefon</th>
+              <th>Tags</th>
+              <th>Website</th>
+              <th>Kennung</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for company_name, entries in grouped_data.items() %}
+              {% for entry in entries %}
+                {% if entry.tags and "Hosting" in entry.tags %}
+                <tr class="data-row" data-customer="{{ company_name.lower() }}" data-moco="{{ entry.identifier.lower() if entry.identifier else '' }}" data-kas="{{ entry.kas_account_link.lower() if entry.kas_account_link else '' }}" data-domain="{{ entry.website.lower() if entry.website != 'Keine Website verfügbar' else '' }}">
+                  <td><strong>{{ company_name }}</strong></td>
+                  <td>{{ entry.identifier }}</td>
+                  <td>{{ entry.billing_address.plz }} {{ entry.billing_address.city }}, {{ entry.billing_address.street }}</td>
+                  <td>{{ entry.first_name }} {{ entry.last_name }}</td>
+                  <td>{{ entry.email }}</td>
+                  <td>{{ entry.phone }}</td>
+                  <td>
+                    {% for tag in entry.tags %}
+                      <span class="badge bg-primary">{{ tag }}</span>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    {% if entry.website != "Keine Website verfügbar" %}
+                      <a href="{{ entry.website }}" target="_blank">{{ entry.website }}</a>
+                    {% else %}
+                      <span class="text-muted">Keine Website</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if entry.kas_account_id %}
+                      <a href="#{{ entry.kas_account_id }}">{{ entry.kas_account_link }}</a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Websupport Tab -->
+    <div class="tab-pane fade" id="websupport" role="tabpanel" aria-labelledby="websupport-tab">
+      <div class="table-container">
+        <h2>Websupport</h2>
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Kundennr</th>
+              <th>Adresse</th>
+              <th>Kontaktpersonen</th>
+              <th>Email</th>
+              <th>Telefon</th>
+              <th>Tags</th>
+              <th>Website</th>
+              <th>Kennung</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for company_name, entries in grouped_data.items() %}
+              {% for entry in entries %}
+                {% if entry.tags and not "Hosting" in entry.tags and (
+                  "WP-Update-Service" in entry.tags or
+                  "Website WordPress" in entry.tags or
+                  "Website Premium" in entry.tags or
+                  "Website Basic" in entry.tags or
+                  "Website Basis" in entry.tags or
+                  "E-Recht24: vote!" in entry.tags or
+                  "Shopware" in entry.tags or
+                  "Web-Visitenkarte" in entry.tags or
+                  "361 Monitoring-Service" in entry.tags or
+                  "Google Analytics" in entry.tags) %}
+                <tr class="data-row" data-customer="{{ company_name.lower() }}" data-moco="{{ entry.identifier.lower() if entry.identifier else '' }}" data-kas="{{ entry.kas_account_link.lower() if entry.kas_account_link else '' }}" data-domain="{{ entry.website.lower() if entry.website != 'Keine Website verfügbar' else '' }}">
+                  <td><strong>{{ company_name }}</strong></td>
+                  <td>{{ entry.identifier }}</td>
+                  <td>{{ entry.billing_address.plz }} {{ entry.billing_address.city }}, {{ entry.billing_address.street }}</td>
+                  <td>{{ entry.first_name }} {{ entry.last_name }}</td>
+                  <td>{{ entry.email }}</td>
+                  <td>{{ entry.phone }}</td>
+                  <td>
+                    {% for tag in entry.tags %}
+                      <span class="tag-websupport">{{ tag }}</span>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    {% if entry.website != "Keine Website verfügbar" %}
+                      <a href="{{ entry.website }}" target="_blank">{{ entry.website }}</a>
+                    {% else %}
+                      <span class="text-muted">Keine Website</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if entry.kas_account_id %}
+                      <a href="#{{ entry.kas_account_id }}">{{ entry.kas_account_link }}</a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Print & Sonstiges Tab -->
+    <div class="tab-pane fade" id="print" role="tabpanel" aria-labelledby="print-tab">
+      <div class="table-container">
+        <h2>Print und Sonstiges</h2>
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Kundennr</th>
+              <th>Adresse</th>
+              <th>Kontaktpersonen</th>
+              <th>Email</th>
+              <th>Telefon</th>
+              <th>Tags</th>
+              <th>Website</th>
+              <th>Kennung</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for company_name, entries in grouped_data.items() %}
+              {% for entry in entries %}
+                {% if not ( "Hosting" in entry.tags or
+                  "WP-Update-Service" in entry.tags or
+                  "Website WordPress" in entry.tags or
+                  "Website Premium" in entry.tags or
+                  "Website Basic" in entry.tags or
+                  "Website Basis" in entry.tags or
+                  "E-Recht24: vote!" in entry.tags or
+                  "Web-Visitenkarte" in entry.tags or
+                  "Shopware" in entry.tags or
+                  "361 Monitoring-Service" in entry.tags or
+                  "Google Analytics" in entry.tags) %}
+                <tr class="data-row" data-customer="{{ company_name.lower() }}" data-moco="{{ entry.identifier.lower() if entry.identifier else '' }}" data-kas="{{ entry.kas_account_link.lower() if entry.kas_account_link else '' }}" data-domain="{{ entry.website.lower() if entry.website != 'Keine Website verfügbar' else '' }}">
+                  <td><strong>{{ company_name }}</strong></td>
+                  <td>{{ entry.identifier }}</td>
+                  <td>{{ entry.billing_address.plz }} {{ entry.billing_address.city }}, {{ entry.billing_address.street }}</td>
+                  <td>{{ entry.first_name }} {{ entry.last_name }}</td>
+                  <td>{{ entry.email }}</td>
+                  <td>{{ entry.phone }}</td>
+                  <td>
+                    {% for tag in entry.tags %}
+                      <span class="tag-print">{{ tag }}</span>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    {% if entry.website != "Keine Website verfügbar" %}
+                      <a href="{{ entry.website }}" target="_blank">{{ entry.website }}</a>
+                    {% else %}
+                      <span class="text-muted">Keine Website</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if entry.kas_account_id %}
+                      <a href="#{{ entry.kas_account_id }}">{{ entry.kas_account_link }}</a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- KAS-Daten Tab -->
+    <div class="tab-pane fade" id="kas" role="tabpanel" aria-labelledby="kas-tab">
+      <div class="table-container">
+        <h2>KAS-Daten: Domains, Subdomains & Subaccounts</h2>
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>
+              <th>Account Login / Kommentar</th>
+              <th>Domains</th>
+              <th>Weiterleitungen</th>
+              <th>Subdomains</th>
+              <th>Subaccounts</th>
+              <th>Subaccounts Domains</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account, domains, redirects, subdomains, subaccounts in kas_data %}
+            <tr class="data-row" id="{{ account.kas_account_id }}" data-kas="{{ account.account_login.lower() }}" data-php="" data-domain="">
+              <td>
+                <strong>{{ account.account_comment or "Kein Kommentar" }}</strong><br>
+                <small>{{ account.account_login }}</small>
+              </td>
+              <!-- Domains -->
+              <td class="domain-cell">
+                {% if domains %}
+                  <ul>
+                    {% for domain in domains %}
+                      {% if domain.domain_name %}
+                      <li data-domain="{{ domain.domain_name.lower() }}" data-php="{{ domain.php_version.lower() if domain.php_version else '' }}">
+                        {{ domain.domain_name }}
+                        {% if domain.php_version %}
+                        (<span class="{% if domain.php_version in ['8.1','8.2', '8.3'] %}php-good{% elif domain.php_version in ['7.0', '7.1', '7.2', '7.3', '7.4', '8.0'] %}php-warning{% elif domain.php_version in ['5.5','5.6'] %}php-old{% endif %}">
+                          PHP {{ domain.php_version }}
+                        </span>)
+                        {% endif %}
+                      </li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="text-muted">Keine Domains vorhanden.</span>
+                {% endif %}
+              </td>
+              <!-- Weiterleitungen -->
+              <td>
+                {% if redirects %}
+                  {% for redirect_path, redirect_domains in redirects.items() %}
+                    <div class="redirect">{{ redirect_path }}</div>
+                    <ul>
+                      {% for domain in redirect_domains %}
+                        <li class="redirect-domain" data-domain="{{ domain.domain_name.lower() }}">{{ domain.domain_name }}</li>
+                      {% endfor %}
+                    </ul>
+                    <br>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">Keine Weiterleitungen vorhanden.</span>
+                {% endif %}
+              </td>
+              <!-- Subdomains -->
+              <td class="subdomain-cell">
+                {% if subdomains %}
+                  <ul>
+                    {% for subdomain in subdomains %}
+                      <li data-domain="{{ subdomain.subdomain_name.lower() }}" data-php="{{ subdomain.php_version.lower() if subdomain.php_version else '' }}">
+                        {{ subdomain.subdomain_name }}
+                        {% if subdomain.php_version %}
+                        (<span class="{% if subdomain.php_version in ['8.1','8.2', '8.3'] %}php-good{% elif subdomain.php_version in ['7.4','5.6'] %}php-warning{% elif subdomain.php_version in ['5.5','7.0', '7.1', '7.2', '7.3', '8.0' ] %}php-old{% endif %}">
+                          PHP {{ subdomain.php_version }}
+                        </span>)
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="text-muted">Keine Subdomains vorhanden.</span>
+                {% endif %}
+              </td>
+              <!-- Subaccounts -->
+              <td>
+                {% if subaccounts %}
+                  <ul>
+                    {% for subaccount in subaccounts %}
+                      <li class="subaccount">
+                        <strong>({{ subaccount.account_comment or "Kein Kommentar" }})</strong><br>
+                        <small>{{ subaccount.account_login }}</small>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="text-muted">Keine Subaccounts vorhanden.</span>
+                {% endif %}
+              </td>
+              <!-- Subaccounts Domains -->
+              <td>
+                {% if subaccounts %}
+                  <ul>
+                    {% for subaccount in subaccounts %}
+                      {% if subaccount.domains %}
+                        <ul class="nested-list">
+                          {% for subdomain in subaccount.domains %}
+                            {% if subdomain.domain_name %}
+                            <li data-domain="{{ subdomain.domain_name.lower() }}" data-php="{{ subdomain.php_version.lower() if subdomain.php_version else '' }}">
+                              {{ subdomain.domain_name }}
+                              {% if subdomain.domain_redirect_status == "301" %}
+                              (<span class="redirect">{{ subdomain.domain_path }}</span>)
+                              {% elif subdomain.php_version %}
+                              (<span class="{% if subdomain.php_version in ['8.1','8.2', '8.3'] %}php-good{% elif subdomain.php_version in ['7.4','5.6'] %}php-warning{% elif subdomain.php_version in ['5.5','7.0', '7.1', '7.2', '7.3', '8.0' ] %}php-old{% endif %}">
+                                PHP {{ subdomain.php_version }}
+                              </span>)
+                              {% endif %}
+                            </li>
+                            {% endif %}
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <ul class="nested-list">
+                          <li>Keine Domains vorhanden.</li>
+                        </ul>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="text-muted">Keine Domains für Subaccounts vorhanden.</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suchfunktion: Filtert alle Tabellenzeilen anhand des Suchkriteriums -->
+  <script>
+    function performSearch() {
+      var criteria = document.getElementById('searchCriteria').value;
+      var searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      // Alle Tabellenzeilen mit der Klasse data-row
+      var rows = document.querySelectorAll("tr.data-row");
+
+      rows.forEach(function(row) {
+        var cellValue = "";
+        var rowVisible = false; // Flag, um zu prüfen, ob die Zeile sichtbar sein soll
+
+        switch(criteria) {
+          case "domain":
+            // Suche in den data-domain-Attributen der Zeile und der untergeordneten Elemente
+            var domainValues = [row.getAttribute("data-domain") || ""];
+            var domainElements = row.querySelectorAll("[data-domain]");
+            domainElements.forEach(function(element) {
+              domainValues.push(element.getAttribute("data-domain") || "");
+            });
+            rowVisible = domainValues.some(function(value) {
+              return value.indexOf(searchTerm) > -1;
+            });
+            break;
+          case "kas":
+            // Suche im data-kas-Attribut
+            cellValue = row.getAttribute("data-kas") || "";
+            rowVisible = cellValue.indexOf(searchTerm) > -1;
+            break;
+          case "moco":
+            // Suche im data-moco-Attribut
+            cellValue = row.getAttribute("data-moco") || "";
+            rowVisible = cellValue.indexOf(searchTerm) > -1;
+            break;
+          case "php":
+            // Suche in den data-php-Attributen der Zeile und der untergeordneten Elemente
+            var phpValues = [row.getAttribute("data-php") || ""];
+            var phpElements = row.querySelectorAll("[data-php]");
+            phpElements.forEach(function(element) {
+              phpValues.push(element.getAttribute("data-php") || "");
+            });
+            rowVisible = phpValues.some(function(value) {
+              return value.indexOf(searchTerm) > -1;
+            });
+            break;
+          case "customer":
+            // Suche im data-customer-Attribut und data-kas-comment
+            var customerValues = [row.getAttribute("data-customer") || "", row.getAttribute("data-kas-comment") || ""];
+            rowVisible = customerValues.some(function(value) {
+                return value.indexOf(searchTerm) > -1;
+            });
+            break;
+          default:
+            // Suche im gesamten Textinhalt der Zeile
+            cellValue = row.textContent.toLowerCase();
+            rowVisible = cellValue.indexOf(searchTerm) > -1;
+        }
+
+        // Zeile ein- oder ausblenden
+        if (rowVisible) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    // Event-Listener für den Suchen-Button
+    document.getElementById('searchButton').addEventListener('click', performSearch);
+
+    // Event-Listener für die Enter-Taste im Suchfeld
+    document.getElementById('searchInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault(); // Verhindert das Standardverhalten der Enter-Taste (z.B. Formular absenden)
+        performSearch();
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

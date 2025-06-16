@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find!</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    .table-container {
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #007BFF;
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    /* PHP-Version Farbcodierung */
+    .php-version {
+      font-weight: bold;
+    }
+    .php-5-5 {
+      color: red;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    .php-5-6 {
+      color: green;
+    }
+    .php-7 {
+      color: orange;
+    }
+    .php-8 {
+      color: green;
+    }
+
+    /* Markierung der KAS-Zeile */
+    .kas-highlight {
+      background-color: yellow;
+    }
+
+    /* Suchbar */
+    .search-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  
+    .search-wrapper .searchbar-container {
+      flex-grow: 1;
+    }
+
+    /* Hosting, Websupport und Print-Tags */
+    .tag-hosting {
+      background-color: #007bff;
+      color: #fff;
+      margin-right: 5px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .tag-websupport {
+      background-color: #28a745;
+      color: #fff;
+      margin-right: 5px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .tag-print {
+      background-color: #343a40;
+      color: #fff;
+      margin-right: 5px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .export-buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Find!</h1>
+
+  <!-- Wrapper für CSS mit Dropdown,Searchbar und Button-->
+  <div class="search-wrapper">
+    <div class="dropdown-container">
+      <select id="searchCriteria" class="form-select" aria-label="Suchkriterien">
+        <option value="alle">Alle Felder</option>
+        <option value="php">PHP Version</option>
+        <option value="kennung">Kunden-Kennung</option>
+        <option value="domain">Domainname</option>
+        <option value="kundenname">Kundenname</option>
+        <option value="moco">Moco Kundennummer</option>
+      </select>
+    </div>
+  
+    <div class="searchbar-container">
+      <input type="text" id="searchInput" class="form-control"
+             onkeyup="searchTable()" 
+             placeholder="Suchen..."
+             onkeydown="if(event.key === 'Enter'){searchTable()}">
+    </div>
+  
+    <button class="btn btn-primary" onclick="searchTable()">Suchen</button>
+  </div>
+
+  <!-- Tab Navigation -->
+  <ul class="nav nav-tabs" id="dataTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link active" id="hosting-tab" data-bs-toggle="tab" href="#hosting" role="tab" aria-controls="hosting" aria-selected="true">Hosting</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="websupport-tab" data-bs-toggle="tab" href="#websupport" role="tab" aria-controls="websupport" aria-selected="false">Websupport</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="print-tab" data-bs-toggle="tab" href="#print" role="tab" aria-controls="print" aria-selected="false">Print</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="kas-tab" data-bs-toggle="tab" href="#kas" role="tab" aria-controls="kas" aria-selected="false">KAS</a>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="dataTabsContent">
+    <!-- Hosting Tab -->
+    <div class="tab-pane fade show active" id="hosting" role="tabpanel" aria-labelledby="hosting-tab">
+      <div class="table-container">
+        <h2>Hosting</h2>
+        <table class="table table-bordered table-striped" id="hostingTable">
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Kundennr</th>
+              <th>Adresse</th>
+              <th>Kontaktpersonen</th>
+              <th>Email</th>
+              <th>Telefon</th>
+              <th>Tags</th>
+              <th>Website</th>
+              <th>Kennung</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Firma A</td>
+              <td>12345</td>
+              <td>Adresse A</td>
+              <td>Max Mustermann</td>
+              <td>max@example.com</td>
+              <td>0123456789</td>
+              <td><span class="tag-hosting">Hosting</span></td>
+              <td><a href="http://firma-a.de" target="_blank">firma-a.de</a></td>
+              <td><a href="#kas-1" class="kas-link" onclick="openKASTab('kas-1')">12345</a></td>
+            </tr>
+            <tr>
+              <td>Firma B</td>
+              <td>67890</td>
+              <td>Adresse B</td>
+              <td>Anna Beispiel</td>
+              <td>anna@example.com</td>
+              <td>9876543210</td>
+              <td><span class="tag-hosting">Hosting</span></td>
+              <td><a href="http://firma-b.de" target="_blank">firma-b.de</a></td>
+              <td><a href="#kas-2" class="kas-link" onclick="openKASTab('kas-2')">67890</a></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="export-buttons">
+          <button class="btn btn-success" onclick="exportCSV('hostingTable')">Export als CSV</button>
+          <button class="btn btn-primary" onclick="exportExcel('hostingTable')">Export als Excel</button>
+          <button class="btn btn-warning" onclick="printTable('hostingTable')">Drucken</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Websupport Tab -->
+    <div class="tab-pane fade" id="websupport" role="tabpanel" aria-labelledby="websupport-tab">
+      <div class="table-container">
+        <h2>Websupport</h2>
+        <table class="table table-bordered table-striped" id="websupportTable">
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Kundennr</th>
+              <th>Adresse</th>
+              <th>Kontaktpersonen</th>
+              <th>Email</th>
+              <th>Telefon</th>
+              <th>Tags</th>
+              <th>Website</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Firma X</td>
+              <td>11111</td>
+              <td>Adresse X</td>
+              <td>John Doe</td>
+              <td>john@example.com</td>
+              <td>0123456789</td>
+              <td><span class="tag-websupport">Websupport</span></td>
+              <td><a href="http://firma-x.de" target="_blank">firma-x.de</a></td>
+            </tr>
+            <tr>
+              <td>Firma Y</td>
+              <td>22222</td>
+              <td>Adresse Y</td>
+              <td>Julia Schmidt</td>
+              <td>julia@example.com</td>
+              <td>1122334455</td>
+              <td><span class="tag-websupport">Websupport</span></td>
+              <td><a href="http://firma-y.de" target="_blank">firma-y.de</a></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="export-buttons">
+          <button class="btn btn-success" onclick="exportCSV('websupportTable')">Export als CSV</button>
+          <button class="btn btn-primary" onclick="exportExcel('websupportTable')">Export als Excel</button>
+          <button class="btn btn-warning" onclick="printTable('websupportTable')">Drucken</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Tab -->
+    <div class="tab-pane fade" id="print" role="tabpanel" aria-labelledby="print-tab">
+      <div class="table-container">
+        <h2>Print</h2>
+        <table class="table table-bordered table-striped" id="printTable">
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Kundennr</th>
+              <th>Adresse</th>
+              <th>Kontaktpersonen</th>
+              <th>Email</th>
+              <th>Telefon</th>
+              <th>Tags</th>
+              <th>Website</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Firma Y</td>
+              <td>22222</td>
+              <td>Adresse Y</td>
+              <td>Julia Schmidt</td>
+              <td>julia@example.com</td>
+              <td>1122334455</td>
+              <td><span class="tag-print">Print</span></td>
+              <td><a href="http://firma-y.de" target="_blank">firma-y.de</a></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="export-buttons">
+          <button class="btn btn-success" onclick="exportCSV('printTable')">Export als CSV</button>
+          <button class="btn btn-primary" onclick="exportExcel('printTable')">Export als Excel</button>
+          <button class="btn btn-warning" onclick="printTable('printTable')">Drucken</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KAS Tab -->
+    <div class="tab-pane fade" id="kas" role="tabpanel" aria-labelledby="kas-tab">
+      <div class="table-container">
+        <h2>KAS</h2>
+        <table class="table table-bordered table-striped" id="kasTable">
+          <thead>
+            <tr>
+              <th>Account Login / Kommentar</th>
+              <th>Domains</th>
+              <th>Weiterleitungen</th>
+              <th>Subdomains</th>
+              <th>Subaccounts</th>
+              <th>Subaccounts Domains</th>
+              <th>PHP Version</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="kas-1">
+              <td><strong>Firma A</strong>
+                <br><em>12345</em>
+              </td>
+              <td>domain1.de</td>
+              <td>weiterleitung1.de</td>
+              <td>sub1.de</td>
+              <td>subaccount1</td>
+              <td>subaccount1.de</td>
+              <td><span class="php-version php-5-5">5.5</span></td>
+            </tr>
+            <tr id="kas-2">
+              <td><strong>Firma B</strong>
+                <br><em>67890</em>
+              </td>
+              <td>domain2.de</td>
+              <td>weiterleitung2.de</td>
+              <td>sub2.de</td>
+              <td>subaccount2</td>
+              <td>subaccount2.de</td>
+              <td><span class="php-version php-7">7.2</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="export-buttons">
+        <button class="btn btn-success" onclick="exportCSV('printTable')">Export als CSV</button>
+        <button class="btn btn-primary" onclick="exportExcel('printTable')">Export als Excel</button>
+        <button class="btn btn-warning" onclick="printTable('printTable')">Drucken</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skripte für Funktionen -->
+  <script>
+    // Searchfunktion
+    function searchTable() {
+      const input = document.getElementById("searchInput");
+      const filter = input.value.toLowerCase();
+      const criteria = document.getElementById("searchCriteria").value; // get selected criteria
+      const tables = document.querySelectorAll("table");
+      tables.forEach(table => {
+        const rows = table.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+          let match = false;
+          row.querySelectorAll("td").forEach((td, index) => {
+            // Checking the selected search criteria
+            if (criteria === "php" && index === 6 && td.textContent.toLowerCase().includes(filter)) {
+              match = true;
+            } else if (criteria === "kennung" && index === 7 && td.textContent.toLowerCase().includes(filter)) {
+              match = true;
+            } else if (criteria === "domain" && index === 1 && td.textContent.toLowerCase().includes(filter)) {
+              match = true;
+            } else if (criteria === "kundenname" && index === 0 && td.textContent.toLowerCase().includes(filter)) {
+              match = true;
+            } else if (criteria === "moco" && index === 2 && td.textContent.toLowerCase().includes(filter)) {
+              match = true;
+            }
+          });
+          row.style.display = match ? "" : "none";
+        });
+      });
+    }
+
+    // Öffnen des KAS Tabs und Markierung der Zeile
+    function openKASTab(kasId) {
+      const kasTab = new bootstrap.Tab(document.getElementById('kas-tab'));
+      kasTab.show();
+      document.querySelectorAll('#kasTable tr').forEach(row => row.classList.remove('kas-highlight'));
+      document.getElementById(kasId).classList.add('kas-highlight');
+    }
+
+    // PHP Version Farbcodierung
+    document.querySelectorAll('.php-version').forEach(function(element) {
+      const version = element.textContent.trim();
+      if (version === '5.5') {
+        element.classList.add('php-5-5');
+      } else if (version === '5.6') {
+        element.classList.add('php-5-6');
+      } else if (version.startsWith('7')) {
+        element.classList.add('php-7');
+      } else if (version.startsWith('8')) {
+        element.classList.add('php-8');
+      }
+    });
+
+    // Export als CSV
+    function exportCSV(tableId) {
+      const table = document.getElementById(tableId);
+      const rows = Array.from(table.rows);
+      const csv = rows.map(row => {
+        const cells = Array.from(row.cells);
+        return cells.map(cell => cell.textContent).join(',');
+      }).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${tableId}.csv`;
+      link.click();
+    }
+
+    // Export als Excel
+    function exportExcel(tableId) {
+      const table = document.getElementById(tableId);
+      const wb = XLSX.utils.table_to_book(table);
+      XLSX.writeFile(wb, `${tableId}.xlsx`);
+    }
+
+    // Drucken der Tabelle
+    function printTable(tableId) {
+      const table = document.getElementById(tableId).outerHTML;
+      const printWindow = window.open('', '', 'height=600,width=800');
+      printWindow.document.write('<html><head><title>Print</title>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(table);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.print();
+    }
+  </script>
+</body>
+</html>
